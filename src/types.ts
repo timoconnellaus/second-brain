@@ -16,6 +16,17 @@ export interface SlackEventCallback {
 	event_time: number;
 }
 
+export interface SlackFile {
+	id: string;
+	name: string;
+	mimetype: string;
+	filetype: string;
+	url_private: string;
+	url_private_download: string;
+	size: number;
+	subtype?: string; // "slack_audio" for voice messages
+}
+
 export interface SlackMessageEvent {
 	type: 'message';
 	subtype?: string;
@@ -26,6 +37,7 @@ export interface SlackMessageEvent {
 	thread_ts?: string;
 	event_ts: string;
 	bot_id?: string;
+	files?: SlackFile[];
 }
 
 export type SlackEvent = SlackUrlVerification | SlackEventCallback;

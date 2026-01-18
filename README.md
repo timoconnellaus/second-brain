@@ -5,6 +5,7 @@ AI-powered cognitive support system that captures thoughts via Slack, classifies
 ## Features
 
 - **Auto-classification**: AI categorizes messages into People, Projects, Ideas, or Admin
+- **Voice messages**: Send voice notes in Slack - transcribed automatically via Whisper
 - **Confidence scoring**: Shows AI confidence and asks for clarification when uncertain
 - **Duplicate detection**: Finds similar existing entries and offers to update or create new
 - **Thread corrections**: Reply to threads to update categories, fields, or add context
@@ -18,6 +19,7 @@ Slack (#sb-inbox) → Cloudflare Workers (Durable Objects) → OpenRouter/Gemini
 
 Built with:
 - [Cloudflare Workers](https://developers.cloudflare.com/workers/) + [Agents SDK](https://developers.cloudflare.com/agents/)
+- [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (Whisper for voice transcription)
 - [OpenRouter](https://openrouter.ai/) (Gemini 3.0 Flash for classification)
 - [Notion API](https://developers.notion.com/)
 - [Slack Events API](https://api.slack.com/events-api)
@@ -128,6 +130,11 @@ Subscribe to these bot events:
 - `message.channels` - Messages in public channels
 - `message.groups` - Messages in private channels
 
+Required bot token scopes:
+- `chat:write` - Post messages
+- `reactions:write` - Add reactions
+- `files:read` - Download voice messages for transcription
+
 ## Notion Setup
 
 To create the required Notion databases:
@@ -149,12 +156,12 @@ Alternatively, create these databases manually following the schema in `SECOND_B
 
 1. Create a Slack channel called `#sb-inbox` (or configure your preferred channel)
 2. Invite your bot to the channel
-3. Post messages like:
+3. Post messages or voice notes like:
    - "Remember to follow up with Sarah about the design review"
    - "Project idea: build a CLI tool for managing dotfiles"
    - "Pay electricity bill by Friday"
 
-The bot will classify, store in Notion, and reply with confirmation.
+The bot will classify (transcribing voice messages first), store in Notion, and reply with confirmation.
 
 ## Commands
 

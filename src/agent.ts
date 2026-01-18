@@ -8,6 +8,7 @@ import type {
 	ClassificationResult,
 	Category,
 	ThreadMessage,
+	SlackFile,
 } from './types';
 import { classify, detectThreadIntent, detectMessageIntent, generateQueryResponse } from './services/openrouter';
 import {
@@ -21,6 +22,7 @@ import {
 	updatePage,
 } from './services/notion';
 import { searchForDuplicates, type SearchResult } from './services/search';
+import { downloadSlackFile, transcribeAudio, isAudioFile } from './services/transcription';
 import {
 	verifySignature,
 	parseSlackEvent,
@@ -340,9 +342,25 @@ export class SecondBrainAgent extends DurableObject<Env> {
 		const message = event.event;
 		console.log('[Agent] handleSlackEvent called with:', JSON.stringify(message, null, 2));
 
-		// Ignore bot messages and subtypes (edits, deletes, etc.)
-		if (message.subtype || message.bot_id || !message.text) {
-			console.log('[Agent] Ignoring message - subtype:', message.subtype, 'bot_id:', message.bot_id);
+		// Ignore bot messages
+		if (message.bot_id) {
+			console.log('[Agent] Ignoring bot message');
+			return;
+		}
+
+		// Handle voice messages (file_share with audio files)
+		if (message.subtype === 'file_share' && message.files?.length) {
+			const audioFile = message.files.find(isAudioFile);
+			if (audioFile) {
+				console.log('[Agent] Processing voice message:', audioFile.id);
+				await this.handleVoiceMessage(event, audioFile);
+				return;
+			}
+		}
+
+		// Ignore other subtypes (edits, deletes, etc.) and messages without text
+		if (message.subtype || !message.text) {
+			console.log('[Agent] Ignoring message - subtype:', message.subtype);
 			return;
 		}
 
@@ -377,6 +395,77 @@ export class SecondBrainAgent extends DurableObject<Env> {
 
 		// Process as capture (new message)
 		await this.processNewMessage(event);
+	}
+
+	// Handle voice messages by transcribing and processing as text
+	private async handleVoiceMessage(event: SlackEventCallback, audioFile: SlackFile): Promise<void> {
+		const message = event.event;
+
+		// Add microphone reaction to show we're processing
+		try {
+			await addReaction(message.channel, message.ts, 'studio_microphone', this.env.SLACK_BOT_TOKEN);
+		} catch (e) {
+			console.error('[Agent] Failed to add microphone reaction:', e);
+		}
+
+		try {
+			// Download the audio file from Slack
+			console.log('[Agent] Downloading audio file...');
+			const audioData = await downloadSlackFile(audioFile.url_private_download || audioFile.url_private, this.env.SLACK_BOT_TOKEN);
+			console.log('[Agent] Audio file downloaded, size:', audioData.byteLength);
+
+			// Transcribe using Whisper
+			console.log('[Agent] Transcribing audio...');
+			const transcription = await transcribeAudio(audioData, this.env.AI);
+			console.log('[Agent] Transcription result:', transcription.text);
+
+			if (!transcription.text || transcription.text.trim() === '') {
+				await postMessage(
+					message.channel,
+					"I couldn't understand the voice message. Could you try again or type your thought?",
+					this.env.SLACK_BOT_TOKEN,
+					message.ts
+				);
+				return;
+			}
+
+			// Add speech balloon reaction to show transcription complete
+			try {
+				await addReaction(message.channel, message.ts, 'speech_balloon', this.env.SLACK_BOT_TOKEN);
+			} catch (e) {
+				console.error('[Agent] Failed to add speech balloon reaction:', e);
+			}
+
+			// Create a modified event with transcribed text for processing
+			const transcribedEvent: SlackEventCallback = {
+				...event,
+				event: {
+					...message,
+					text: transcription.text,
+					subtype: undefined, // Clear subtype so it processes normally
+				},
+			};
+
+			// Process as a regular message (classify and file)
+			await this.processNewMessage(transcribedEvent);
+		} catch (error) {
+			console.error('[Agent] Error processing voice message:', error);
+
+			// Add warning reaction
+			try {
+				await addReaction(message.channel, message.ts, 'warning', this.env.SLACK_BOT_TOKEN);
+			} catch (e) {
+				console.error('[Agent] Failed to add warning reaction:', e);
+			}
+
+			// Notify user of error
+			await postMessage(
+				message.channel,
+				`Error processing voice message: ${error instanceof Error ? error.message : 'Unknown error'}. Try posting as text instead.`,
+				this.env.SLACK_BOT_TOKEN,
+				message.ts
+			);
+		}
 	}
 
 	private async processNewMessage(event: SlackEventCallback): Promise<void> {
