@@ -1,0 +1,88 @@
+{
+	"description": "Classification prompt evaluation cases",
+	"cases": [
+		{
+			"id": "person-coffee",
+			"input": "Had coffee with Sarah - she's looking for a frontend dev",
+			"expected": {
+				"category": "person",
+				"confidence": { "min": 0.7 },
+				"fields": { "name": "Sarah" }
+			}
+		},
+		{
+			"id": "person-conference",
+			"input": "Met John at the React conference, he works at Stripe on payments infrastructure",
+			"expected": {
+				"category": "person",
+				"confidence": { "min": 0.7 },
+				"fields": { "name": "John" }
+			}
+		},
+		{
+			"id": "project-website",
+			"input": "Need to redesign the website, start with wireframes for the homepage",
+			"expected": {
+				"category": "project",
+				"confidence": { "min": 0.6 },
+				"name": { "contains": "website" }
+			}
+		},
+		{
+			"id": "project-api",
+			"input": "Build the REST API for user authentication - first step is to set up JWT tokens",
+			"expected": {
+				"category": "project",
+				"confidence": { "min": 0.6 }
+			}
+		},
+		{
+			"id": "idea-ai-journal",
+			"input": "What if we used AI to analyze journal entries and find patterns in mood and productivity?",
+			"expected": {
+				"category": "idea",
+				"confidence": { "min": 0.6 }
+			}
+		},
+		{
+			"id": "idea-newsletter",
+			"input": "Idea: weekly newsletter summarizing the best AI papers with practical takeaways",
+			"expected": {
+				"category": "idea",
+				"confidence": { "min": 0.7 }
+			}
+		},
+		{
+			"id": "admin-passport",
+			"input": "Need to renew passport by March 15",
+			"expected": {
+				"category": "admin",
+				"confidence": { "min": 0.7 },
+				"fields": { "due_date": { "contains": "03-15" } }
+			}
+		},
+		{
+			"id": "admin-taxes",
+			"input": "File quarterly taxes before April 15",
+			"expected": {
+				"category": "admin",
+				"confidence": { "min": 0.7 }
+			}
+		},
+		{
+			"id": "admin-dentist",
+			"input": "Schedule dentist appointment",
+			"expected": {
+				"category": "admin",
+				"confidence": { "min": 0.5 }
+			}
+		},
+		{
+			"id": "ambiguous-low-confidence",
+			"input": "Remember the thing about the stuff",
+			"expected": {
+				"confidence": { "max": 0.7 }
+			}
+		}
+	]
+}

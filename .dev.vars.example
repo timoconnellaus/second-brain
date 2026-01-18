@@ -1,0 +1,46 @@
+# Second Brain - Environment Variables
+# Copy this file to .dev.vars and fill in your values
+
+# =============================================================================
+# SECRETS (set via `wrangler secret put <NAME>` for production)
+# =============================================================================
+
+# Notion Integration Token
+# Create at: https://www.notion.so/my-integrations
+NOTION_TOKEN=ntn_your_token_here
+
+# OpenRouter API Key (for AI classification)
+# Get one at: https://openrouter.ai/keys
+OPENROUTER_API_KEY=sk-or-v1-your_key_here
+
+# Slack Bot Token
+# From your Slack app's OAuth & Permissions page
+SLACK_BOT_TOKEN=xoxb-your_token_here
+
+# Slack Signing Secret
+# From your Slack app's Basic Information page
+SLACK_SIGNING_SECRET=your_signing_secret_here
+
+# =============================================================================
+# CONFIGURATION (can also be set in wrangler.jsonc vars section)
+# =============================================================================
+
+# Your Slack User ID (for receiving DMs/digests)
+# Find in Slack: click your profile -> three dots -> Copy member ID
+SLACK_USER_ID=U_your_user_id
+
+# Notion Database IDs
+# These are created by `bun run setup-notion` or you can use existing databases
+NOTION_DB_PEOPLE=your_database_id
+NOTION_DB_PROJECTS=your_database_id
+NOTION_DB_IDEAS=your_database_id
+NOTION_DB_ADMIN=your_database_id
+NOTION_DB_INBOX_LOG=your_database_id
+
+# =============================================================================
+# SETUP SCRIPT ONLY (not needed at runtime)
+# =============================================================================
+
+# Parent page ID where Notion databases will be created
+# Only needed when running `bun run setup-notion` to create new databases
+NOTION_PARENT_PAGE_ID=your_parent_page_id

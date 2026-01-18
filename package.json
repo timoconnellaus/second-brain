@@ -7,12 +7,19 @@
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"evals": "bun run evals/run-evals.ts",
+		"cf-typegen": "wrangler types",
+		"setup-notion": "export $(grep -v '^#' .dev.vars | xargs) && bun run scripts/setup-notion.ts",
+		"test-local": "bun run scripts/test-local.ts"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@types/node": "^25.0.9",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
 		"wrangler": "^4.59.2"
+	},
+	"dependencies": {
+		"agents": "^0.3.6"
 	}
 }
