@@ -101,21 +101,19 @@ export class SecondBrainAgent extends DurableObject<Env> {
 		// Check if this is an interaction (button click)
 		const isInteraction = request.headers.get('x-slack-interaction') === 'true';
 
-		// Verify Slack signature (skip in development if header missing)
+		// Verify Slack signature (REQUIRED for security)
 		const timestamp = request.headers.get('x-slack-request-timestamp');
 		const signature = request.headers.get('x-slack-signature');
-		console.log('[Agent] Signature headers - timestamp:', timestamp, 'signature:', signature?.substring(0, 20) + '...');
 
-		if (timestamp && signature) {
-			console.log('[Agent] Verifying Slack signature...');
-			const isValid = await verifySignature(body, timestamp, signature, this.env.SLACK_SIGNING_SECRET);
-			console.log('[Agent] Signature valid:', isValid);
-			if (!isValid) {
-				console.error('[Agent] Invalid signature - rejecting request');
-				return new Response('Invalid signature', { status: 401 });
-			}
-		} else {
-			console.log('[Agent] No signature headers - skipping verification (dev mode)');
+		if (!timestamp || !signature) {
+			console.error('[Agent] Missing signature headers - rejecting request');
+			return new Response('Missing signature headers', { status: 401 });
+		}
+
+		const isValid = await verifySignature(body, timestamp, signature, this.env.SLACK_SIGNING_SECRET);
+		if (!isValid) {
+			console.error('[Agent] Invalid signature - rejecting request');
+			return new Response('Invalid signature', { status: 401 });
 		}
 
 		// Route to interaction handler if this is a button click
